@@ -3,7 +3,7 @@ from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import torch
 import requests
 #classification
-MODEL_NAME = "imaneumabderahmane/Arabertv2-classifier-FA"
+MODEL_NAME = "imaneumabderahmane/FA-Arabertv2-classifier-2"
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 model = AutoModelForSequenceClassification.from_pretrained(MODEL_NAME)
 LABELS = ["LABEL_0", "LABEL_1"]
