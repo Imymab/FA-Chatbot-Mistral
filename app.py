@@ -2,6 +2,14 @@ import streamlit as st
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import torch
 import requests
+#classification
+MODEL_NAME = "imaneumabderahmane/Arabertv2-classifier-FA"
+tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+model = AutoModelForSequenceClassification.from_pretrained(MODEL_NAME)
+LABELS = ["LABEL_0", "LABEL_1"]
+
+
+
 
 api_key = st.secrets["OPENROUTER_API_KEY"]
 def get_mistral_response(prompt, api_key):
@@ -40,6 +48,14 @@ if st.button("Ask"):
         st.warning("Please enter a question.")
     else:
         with st.spinner("Analyzing your question..."):
-            answer = get_mistral_response(user_input, api_key)
+            category = classify_question(user_input)
+
+        if category == "LABEL_1":
+            st.success("✅ First-aid question detected. Getting advice...")
+            with st.spinner("Contacting the AI assistant..."):
+                answer = get_mistral_response(user_input, api_key)
             st.write("### 💬 Response:")
             st.write(answer)
+        else:
+            st.error("❌ Sorry, I can only answer first-aid–related questions.")
+
