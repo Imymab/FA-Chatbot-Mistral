@@ -2,6 +2,9 @@ import streamlit as st
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import torch
 import requests
+
+
+
 #classification
 MODEL_NAME = "imaneumabderahmane/FA-Arabertv2-classifier-2"
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
