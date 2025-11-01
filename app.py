@@ -7,12 +7,19 @@ import requests
 
 #classification
 MODEL_NAME = "imaneumabderahmane/FA-Arabertv2-classifier-2"
-tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
-model = AutoModelForSequenceClassification.from_pretrained(
-    MODEL_NAME,
-    torch_dtype=torch.float32,
-    device_map=None
-)
+@st.cache_resource
+def load_model():
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+    model = AutoModelForSequenceClassification.from_pretrained(
+        MODEL_NAME,
+        torch_dtype=torch.float32,           # Force real weights
+        low_cpu_mem_usage=False,             # Ensure weights are actually loaded
+        device_map=None                      # Avoid meta device
+    )
+    model.eval()
+    return tokenizer, model
+
+tokenizer, model = load_model()
 
 LABELS = ["LABEL_0", "LABEL_1"]
 def classify_question(text):
