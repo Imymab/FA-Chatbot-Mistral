@@ -54,12 +54,12 @@ if st.button("Ask"):
         with st.spinner("Analyzing your question..."):
             category = classify_question(user_input)
 
-        if category == "LABEL_1":
-            st.success("✅ First-aid question detected. Getting advice...")
-            with st.spinner("Contacting the AI assistant..."):
+            if category == "LABEL_1":
+              st.success("✅ First-aid question detected. Getting advice...")
+              with st.spinner("Contacting the AI assistant..."):
                 answer = get_mistral_response(user_input, api_key)
-            st.write("### 💬 Response:")
-            st.write(answer)
-        else:
-            st.error("❌ Sorry, I can only answer first-aid–related questions.")
+                st.write("### 💬 Response:")
+                st.write(answer)
+            else:
+                st.error("❌ Sorry, I can only answer first-aid–related questions.")
 
