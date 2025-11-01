@@ -7,7 +7,11 @@ MODEL_NAME = "imaneumabderahmane/FA-Arabertv2-classifier-2"
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 model = AutoModelForSequenceClassification.from_pretrained(MODEL_NAME)
 LABELS = ["LABEL_0", "LABEL_1"]
-
+def classify_question(text):
+    inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=True)
+    outputs = model(**inputs)
+    pred = torch.argmax(outputs.logits, dim=1).item()
+    return LABELS[pred]
 
 
 
