@@ -1,35 +1,25 @@
 import streamlit as st
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
-import torch
 import requests
+import torch
 
 
 
 #classification
 MODEL_NAME = "imaneumabderahmane/FA-Arabertv2-classifier-2"
-@st.cache_resource
-def load_model():
-    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
-    model = AutoModelForSequenceClassification.from_pretrained(
-        MODEL_NAME,
-        torch_dtype=torch.float32,           # Force real weights
-        low_cpu_mem_usage=False,             # Ensure weights are actually loaded
-        device_map=None                      # Avoid meta device
-    )
-    model.eval()
-    return tokenizer, model
-
-tokenizer, model = load_model()
-
+tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+model = AutoModelForSequenceClassification.from_pretrained(MODEL_NAME)
 LABELS = ["LABEL_0", "LABEL_1"]
+
+
+
 def classify_question(text):
     inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=True)
     outputs = model(**inputs)
     pred = torch.argmax(outputs.logits, dim=1).item()
     return LABELS[pred]
 
-
-
+#chatbot response
 api_key = st.secrets["OPENROUTER_API_KEY"]
 def get_mistral_response(prompt, api_key):
     url = "https://openrouter.ai/api/v1/chat/completions"
@@ -41,8 +31,49 @@ def get_mistral_response(prompt, api_key):
     data = {
         "model": "mistralai/mistral-7b-instruct",
         "messages": [
-            {"role": "system", "content": ".أنت مساعد طبي محترف متخصص في الإسعافات الأولية. أجب دائمًا بنصائح إسعاف أولية واضحة ودقيقة وآمنة. اقرأ السؤال التالي بعناية وقدم الإجابة المناسبة"},
-            {"role": "user", "content": prompt}
+        
+  {
+    "role": "system",
+    "content": ".أنت مساعد طبي محترف متخصص في الإسعافات الأولية. أجب دائمًا بنصائح إسعاف أولية واضحة ودقيقة وآمنة. اقرأ السؤال التالي بعناية وقدم الإجابة المناسبة"
+  },
+
+  {
+    "role": "user",
+    "content": "أصابتني ضربة على عظمة حاجبي الأيسر وحدوث انتفاخ بسيط. وضعت كمادات باردة. ماذا ينبغي أن أفعل أيضًا؟"
+  },
+  {
+    "role": "assistant",
+    "content": "استمر بوضع كمادات باردة لفترات قصيرة (10–15 دقيقة كل ساعة) لتخفيف الورم. ارفع رأسك عند الاستلقاء لتقليل التورم، وتجنّب الضغط على المنطقة. راقب أي تغيّر في الرؤية، فقدان للوعي، أو تقيؤ — إذا ظهرت أي من هذه الأعراض فراجع الطوارئ فورًا."
+  },
+
+  {
+    "role": "user",
+    "content": "حدث نزيف داخل المخ ثم تلا ذلك ضعف في الساق اليسرى وخرف وهلوسة. هل هذا زهايمر أم شيء آخر؟"
+  },
+  {
+    "role": "assistant",
+    "content": "هذه أعراض خطيرة تتطلب تقييمًا عصبيًا عاجلًا. حالات النزيف والجلطة بالمخ قد تسبب ضعفًا موضعيًا واضطرابًا إدراكيًا؛ لذلك يلزم تصوير مقطعي أو رنين مغناطيسي وتقييم من أخصائي أعصاب لتحديد السبب وخطة العلاج. تواصل مع مقدم الرعاية الطارئة أو قسم الأعصاب فورًا."
+  },
+
+  {
+    "role": "user",
+    "content": "كيف أتعامل مع شخص يتعرض لنوبة صرع؟"
+  },
+  {
+    "role": "assistant",
+    "content": "أبعد حوله الأشياء الحادة وحافظ على الهدوء. ضع شيئًا ناعمًا تحت رأسه، لا تُقيد حركاته، ولا تضع شيئًا في فمه. بعد انتهاء النوبة، ضع الشخص على جنبه للحفاظ على مجرى الهواء وراقبه حتى يستعيد وعيه. إذا استمرت النوبة أكثر من 5 دقائق أو تكررت، اطلب الإسعاف فورًا."
+  },
+
+  {
+    "role": "user",
+    "content": "السلام عليكم، كيف أعرف ما إذا كان جرح الرأس يحتاج خياطة، علماً أنه لا يوجد نزيف الآن؟"
+  },
+  {
+    "role": "assistant",
+    "content": "إن كانت الحافة واسعة أو مفتوحة بعمق أو كان الحجم أكبر من 1 سم أو كان الجرح في وجهٍ يؤثر على الشكل، فقد يحتاج للخياطة ويُفضل عرض المصاب على الطبيب. نظف الجرح بمحلول فيزيولوجي، غطّه بشاش معقم، وتجنب إعادة الخياطة بعد مرور أكثر من 12 ساعة دون استشارة طبية. إذا ظهرت علامات التهاب أو عدم التئام، راجع الطبيب."
+  },
+
+  {"role": "user", "content": prompt}
         ],
         "temperature": 0.7,
         "max_tokens": 256    }
@@ -55,26 +86,26 @@ def get_mistral_response(prompt, api_key):
     
 
 # Streamlit UI
-st.title("🩺 Arabic First-Aid Chatbot")
+st.title("المساعد الخاص بالإسعافات الأولية")
 
-api_key = st.text_input("Enter your OpenRouter API key:", type="password")
-user_input = st.text_area("🗣️ Write your question in Arabic:")
+api_key = st.text_input(" :من فضلك أدخل المفتاح الخاص بك ", type="password")
 
-if st.button("Ask"):
+user_input = st.text_area(":اكتب سؤالك باللغة العربية", height = 100 )
+
+if st.button("اسأل"):
     if not api_key:
-        st.warning("Please enter your OpenRouter API key.")
+        st.warning("من فضلك أدخل المفتاح الخاص بك")
     elif not user_input.strip():
-        st.warning("Please enter a question.")
+        st.warning("من فضلك اكتب سؤالك ")
     else:
-        with st.spinner("Analyzing your question..."):
+        with st.spinner("...جار تحليل سؤالك"):
             category = classify_question(user_input)
 
             if category == "LABEL_1":
-              st.success("✅ First-aid question detected. Getting advice...")
-              with st.spinner("Contacting the AI assistant..."):
-                answer = get_mistral_response(user_input, api_key)
-                st.write("### 💬 Response:")
-                st.write(answer)
+                st.success("..تم التعرف على سؤال إسعافات أولية. نحصل الآن على الإرشادات ✅")
+                with st.spinner("جارٍ التواصل مع المساعد الذكي..."):
+                  answer = get_mistral_response(user_input, api_key)
+                  st.write("### 💬 الجواب:")
+                  st.write(answer)
             else:
-                st.error("❌ Sorry, I can only answer first-aid–related questions.")
-
+                st.error(" عذرًا، يمكنني الإجابة فقط على الأسئلة المتعلقة بالإسعافات الأولية❌")
