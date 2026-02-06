@@ -19,6 +19,35 @@ def classify_question(text):
     pred = torch.argmax(outputs.logits, dim=1).item()
     return LABELS[pred]
 
+# =======================
+# LLM first-aid check
+# =======================
+def llm_first_aid_check(query, api_key):
+    url = "https://openrouter.ai/api/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
+    prompt = f"""
+هل السؤال التالي يندرج ضمن الإسعافات الأولية؟ أجب فقط بـ "نعم" أو "لا":
+{query}
+"""
+    data = {
+        "model": "mistralai/mistral-7b-instruct",
+        "messages": [
+            {"role": "system", "content": "أنت مساعد ذكي عربي يساعد في تصنيف الأسئلة الطبية."},
+            {"role": "user", "content": prompt}
+        ],
+        "temperature": 0,
+        "max_tokens": 10
+    }
+    response = requests.post(url, headers=headers, json=data)
+    if response.status_code == 200:
+        answer = response.json()["choices"][0]["message"]["content"].strip()
+        return "نعم" in answer
+    else:
+        return False
+
 #chatbot response
 api_key = st.secrets["OPENROUTER_API_KEY"]
 def get_mistral_response(prompt, api_key):
@@ -101,11 +130,20 @@ if st.button("اسأل"):
         with st.spinner("...جار تحليل سؤالك"):
             category = classify_question(user_input)
 
-            if category == "LABEL_1":
-                st.success("..تم التعرف على سؤال إسعافات أولية. نحصل الآن على الإرشادات ✅")
-                with st.spinner("جارٍ التواصل مع المساعد الذكي..."):
-                  answer = get_mistral_response(user_input, api_key)
-                  st.write("### 💬 الجواب:")
-                  st.write(answer)
-            else:
-                st.error(" عذرًا، يمكنني الإجابة فقط على الأسئلة المتعلقة بالإسعافات الأولية❌")
+        if category == "LABEL_1":
+                with st.spinner("جارٍ التحقق من صحة السؤال..."):
+                     is_first_aid = llm_first_aid_check(user_input, api_key)
+
+                if is_first_aid:
+                     st.success("..تم التعرف على سؤال إسعافات أولية. نحصل الآن على الإرشادات ✅")
+                     with st.spinner("جارٍ التواصل مع المساعد الذكي..."):
+                          answer = get_mistral_response(user_input, api_key)
+                          st.write("### 💬 الجواب:")
+                          st.write(answer)
+                else:
+                     st.warning("يبدو أن السؤال لا يتعلق بالإسعافات الأولية ❌")
+        else: 
+                st.error("عذرًا، يمكنني الإجابة فقط على الأسئلة المتعلقة بالإسعافات الأولية❌")
+                 
+
+
